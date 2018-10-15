@@ -7,47 +7,35 @@ admin.initializeApp();
 export const speechToTextFunc = functions.https.onRequest((request, response) => {
   const param: string = request.query.fileName;
   if(!param) {
-    response.send().end();
+    console.error('ERROR: fileName is null.');
+    response.end();
   }
 
-  const client = new speech.SpeechClient();
-
-  // AMR ファイルの認識
+  // 音声ファイルの設定
   const payload = {
     config: {
+      // WAV, 44100
       encoding: 'AMR',
       sampleRateHertz: 8000,
       languageCode: 'ja-JP'
     },
     audio: {
-      uri: 'gs://forrest-school.appspot.com/voices/' + param
+      uri: '[STORAGE_NAME]' + param
     }
-
-    // config: {
-    //   encoding: 'WAV',
-    //   sampleRateHertz: 44100,
-    //   languageCode: 'ja-JP'
-    // },
-    // audio: {
-    //   uri: 'gs://forrest-school.appspot.com/voices/oki.WAV'
-    // }
   }
 
-  // パス保存する際に拡張子はいらない
-  const filePath = param.replace('.amr', '');
-
-  client.recognize(payload).then(data => {
+  // SPEECH API
+  const client = new speech.SpeechClient();
+  client.longRunningRecognize(payload).then(data => {
+    const res = data[0];
+    return res.promise();
+  }).then(data => {
     const res = data[0];
     const transcription = res.results.map(result => result.alternatives[0].transcript).join('\n');
-    console.log('Transcription: ', transcription);
-
-    const ref = admin.database().ref().child('orgText/').child(filePath).set({text: transcription}, error => {
-      if (error) {
-        console.log('Data could not be saved.' + error);
-        response.send(transcription).end();
-      } else {
-        response.send(transcription).end();
-      }
+    const ref = admin.firestore().collection('orgText').doc(param).set({name: param, text: transcription})
+    .then(() => {
+      console.error('Document successfully written!');
+      response.end();
     });
   }).catch(err => {
     console.error('ERROR:', err);
