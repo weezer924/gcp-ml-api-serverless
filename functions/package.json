@@ -12,8 +12,11 @@
   "main": "lib/index.js",
   "dependencies": {
     "@google-cloud/speech": "^2.1.1",
+    "@google-cloud/translate": "^2.1.2",
+    "@google-cloud/vision": "^0.22.1",
     "firebase-admin": "~5.12.1",
-    "firebase-functions": "^1.0.3"
+    "firebase-functions": "^1.0.3",
+    "request-promise": "^2.0.0"
   },
   "devDependencies": {
     "tslint": "^5.8.0",
